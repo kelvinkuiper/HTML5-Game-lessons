@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Javascript - Game basics & Physics</title>
+    
+    <style>
+    canvas { display: block; border: 2px solid black; }
+    </style>
+</head>
+<body>
+
+<canvas id="canvas" width="400" height="200"></canvas>
+
+<script>
+    var canvas = document.getElementById('canvas');
+    var ctx = canvas.getContext('2d');
+    var W = canvas.width;
+    var H = canvas.height;
+
+    var gravity = 0.5;
+    
+    var Ball = function () {
+        // Nu tekenen we een circel
+        this.color = '#'+(Math.random()*0xFFFFFF<<0).toString(16);
+        this.radius = this.width = this.height = (Math.floor(Math.random() * 20)+5);
+
+        this.y = this.radius / 2;
+        this.x = Math.floor(Math.random() * canvas.width);
+
+        this.vy = 0;
+        this.vx = 0;
+
+        this.bounceFactor = Math.random() * 0.9;
+
+    }
+    Ball.prototype.draw = function () {
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2, true); 
+        ctx.closePath();
+        ctx.fill();
+    }
+    Ball.prototype.update = function () {
+        this.vy += gravity;
+        this.y += this.vy;
+
+        if ( this.y + this.radius > H ) {
+            this.y = H - this.radius;
+            this.vy *= -this.bounceFactor;
+        }
+    }
+
+    var balls = [];
+    for(var i = 0; i<15; i++){
+        balls.push(new Ball());
+    }
+    
+
+
+    var update = function() {
+        for(var i in balls) {
+            balls[i].update();
+        }    
+    }
+
+    var render = function() {
+        ctx.clearRect(0, 0, W, H);
+        
+        for(var i in balls) {
+            balls[i].draw();
+        }
+    }
+
+    var main = function() {
+        requestAnimationFrame(main);
+        update();
+        render();
+    }
+    
+    main();
+
+
+</script>
+</body>
+</html>

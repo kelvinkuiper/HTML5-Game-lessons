@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Flappy Bier</title>
+    <link href='http://fonts.googleapis.com/css?family=Sigmar+One' rel='stylesheet' type='text/css'>
+    <style>
+    body { background: #007600; font-family: 'Sigmar One', cursive; }
+    h1.page-title { display: block; width: 242px; height: 100px; background: url('img/logo.png'); text-indent: -99999em; margin: 0 auto 40px; }
+    canvas { display: block; border: 10px solid #fff; }
+    .game-container { position: relative; width: 1020px; margin: 0 auto; }
+    #gameover { position: absolute; left: 0; top: 0; bottom: 0; right: 0; background: red; z-index: 99; }
+    #gameover .msg { color: #fff; text-align: center; }
+    #gameover .msg h1 { margin: 60px auto; font-size: 50px; color: #fff; text-align: center; }
+    #gameover .msg .endscore { font-size: 40px; font-weight: bold; }
+    #score { position: absolute; right: 0; top: 0; background: #fff; padding: 5px 5px 0px 5px; width: 70px; font-size: 20px; z-index: 3; }
+    </style>
+</head>
+<body>
+<div class="site-container">
+    <header class="site-title">
+        <h1 class="page-title">Flappy Bier</h1>
+    </header>
+    <div class="game-container">
+        <div id="gameover"><div class="msg"><h1>DOOD!</h1>Je score was:<div class="endscore" id="endscore"></div></div></div>
+        <div class="score-container">
+            <div id="score"></div>
+        </div>
+        <canvas id="canvas" width="1000" height="500" oncontextmenu="return false;"></canvas>
+    </div>
+</div>
+<script>
+
+
+var KEY_STATUS = {
+    'buttondown': false,
+}
+document.onkeydown = function(e) {  
+    KEY_STATUS.buttondown = true;
+}
+
+document.onkeyup = function(e) {
+    KEY_STATUS.buttondown = false;
+}
+
+document.onmousedown = function(e) {
+    KEY_STATUS.buttondown = true;
+}
+document.onmouseup = function(e) {
+    KEY_STATUS.buttondown = false;   
+}
+document.ontouchstart = function(e) {
+    KEY_STATUS.buttondown = true;
+}
+document.ontouchend = function(e) {
+    KEY_STATUS.buttondown = false;
+}
+
+var canvas = document.getElementById('canvas');
+var ctx = canvas.getContext('2d');
+var W = canvas.width;
+var H = canvas.height;
+
+var Background = function () {
+    this.init = function () {
+        this.image = new Image();
+        this.image.src = 'img/game-background.jpg';
+        this.speed = game.speed;
+        this.y = 0;
+        this.x = 0;
+
+        this.width = W;
+        this.height = H;
+    }
+
+    this.draw = function () {
+        if(Math.abs(this.x) >= W){
+            this.x = 0;
+        }
+
+        this.x -= this.speed;
+
+        ctx.drawImage(this.image, this.x, this.y);
+        ctx.drawImage(this.image, this.x + this.width, this.y);
+    }
+}
+
+var Player = function () {
+    /* 
+    ** Player object properties. Every object in our game should have a draw and update method (see below)
+    */
+    this.init = function (alive) {
+        this.alive = alive || false; //Set this to false and see what happens
+
+        this.width = 161;
+        this.height = 45;
+
+        this.y = 20;
+        this.x = 100;
+
+        //velocity
+        this.vy = 0;
+        this.vx = 0;
+
+        this.jumpHeight = game.jumpHeight;
+
+        this.image = new Image();
+        this.image.src = 'img/player.png';
+    }
+
+}
+Player.prototype.draw = function () {
+    ctx.drawImage(this.image, this.x, this.y);
+}
+Player.prototype.update = function() { 
+    /* 
+    ** Player update method. Called in our main update loop
+    */
+    if (KEY_STATUS.buttondown) {
+        this.vy = -this.jumpHeight;
+    }
+    
+    this.vy += game.gravity;
+    this.y += this.vy;
+
+    if(this.y > H - this.height){
+        this.y = H - this.height;
+        this.vy = 0;
+    }
+
+    if(this.y < 0){
+        this.y = 0;
+        this.vy = 0;
+    }
+}
+var Enemy = function () {
+    /* 
+    ** Enemy object properties. Every object in our game should have a draw and update method (see below)
+    */
+    this.init = function (alive) {
+        this.alive = alive || false;
+        this.width = 54;
+        this.height = 54;
+
+        this.y = Math.floor(Math.random() * H / this.height) * this.height;
+        this.x = W;
+
+        this.image = new Image();
+        this.image.src = 'img/krat.png';
+
+        if(alive) {
+            //game.particleExplosion.init(this.x - (this.width/2), this.y);
+        }
+    }
+}
+Enemy.prototype.draw = function () {
+    /* 
+    ** Enemy draw method. Called every animate tick
+    */
+    ctx.drawImage(this.image, this.x, this.y);
+}
+Enemy.prototype.update = function () {
+    /* 
+    ** Enemy update method. Called every animate tick
+    */
+    if(this.alive) {
+        this.x -= game.speed;
+    }
+    
+}
+
+var Particle = function () {
+    this.init = function (x, y, speed, dir, life) {
+
+        this.x = x;
+        this.y = y;
+        
+        this.speed = speed;
+        this.dir = dir;
+
+        this.life = life;
+
+        this.xInc = Math.cos(this.dir) * this.speed;
+        this.yInc = Math.sin(this.dir) * this.speed;
+
+    }
+    this.update = function() {
+        
+        this.x += this.xInc;
+        this.y += this.yInc;
+        
+        this.life--;
+    }   
+    this.draw = function () {
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(this.x-1, this.y-1, 4, 4);
+    }
+}
+
+var animate = function () {
+    /*
+    ** The animate loop!
+    */
+    var elapsed = Date.now() - game.start;
+
+    if(game.player.alive) {
+        requestAnimationFrame(animate);
+        game.update(elapsed);
+        game.render();
+    }
+    else {
+        game.gameOver();
+    }
+}
+
+var Game = function() {
+
+    this.score = 0;
+    this.elapsed = 0;
+
+    this.speed = 3; //controls the speed of the kratten going left
+    this.gravity = 0.2; //controls the gravity pulling the player
+    
+    this.jumpHeight = 4; //controls the velocity of player going upwards
+
+    this.AantalKratten = {
+        'minDistance': 500,
+        'maxDistance': 1000
+    }
+
+    this.scoreBoard = document.getElementById('score');
+
+    this.init = function () {
+        document.getElementById('gameover').addEventListener('click', function(){
+            game.startGame();
+        });
+
+        this.startGame();
+    }
+
+    this.startGame = function () {
+
+        document.getElementById('gameover').style.display = 'none';
+
+        this.start = Date.now();
+        this.kratten = [];
+
+        this.player = new Player();
+        this.player.init(true);
+
+        this.background = new Background();
+        this.background.init();
+
+
+        animate(); //start animate loop
+
+        //start krattenspawner loop
+        this.krattenSpawner = new KrattenSpawner(); 
+        this.krattenSpawner.init(this.AantalKratten.minDistance, this.AantalKratten.maxDistance, 10);
+    }
+    this.update = function (elapsed) {
+        /*
+        * Main update tick. This functions gets called for each animate tick. It should call all our objects update methods
+        * Also: collision detection, score updating, etc
+        */
+
+        this.score = Math.round(elapsed / 100);
+        this.scoreBoard.innerHTML = this.score;
+
+        // Handle x,y updates of the player
+        this.player.update();
+
+        // Handle enemies
+        for(var i in this.kratten) {
+            this.kratten[i].update();
+            if( this.kratten[i].x + this.kratten[i].width > this.player.x
+                && this.kratten[i].x <= this.player.x + this.player.width
+                && this.kratten[i].x + this.kratten[i].width >= this.player.x 
+                && this.kratten[i].y <= this.player.y + this.player.height
+                && this.kratten[i].y + this.kratten[i].height >= this.player.y) {
+                
+                this.player.alive = false;
+            }
+        }
+
+    }
+
+    this.render = function () { 
+        /*
+        * Main render/draw loop. This functions gets called for each tick. It should draw all our drawables
+        */
+
+        // Clear entire screen
+        ctx.clearRect(0, 0, W, H);
+        
+        // Draw our objects on screen
+        this.background.draw();  
+        this.player.draw();
+        for(var i = 0; i < this.kratten.length; i++) {
+            this.kratten[i].draw();
+        }
+    }
+    this.gameOver = function () {
+        this.krattenSpawner.stop();
+        document.getElementById('gameover').style.display = 'block';
+        document.getElementById('endscore').innerHTML = this.score;
+    }
+}
+
+
+var spawnKrat = function () {
+    if(game.player.alive) {
+        
+        game.kratten[game.kratten.length - 1].init(true);
+        game.kratten.unshift(game.kratten.pop());
+
+        game.krattenSpawner.start();
+    }   
+}
+
+var KrattenSpawner = function () {
+
+    this.init = function (minDistance, maxDistance, poolsize) {
+        
+        this.minDistance = minDistance;
+        this.maxDistance = maxDistance;
+        console.log(poolsize);
+        for(var i = 0; i < poolsize; i++) {
+            var krat = new Enemy();
+            krat.init(false);
+            game.kratten[i] = krat;
+        }
+
+        this.start();
+    }
+    this.start = function () {
+        this.spawner = setTimeout(function(){
+            spawnKrat();
+        }, this.getSpawnTimer())
+    }
+    this.stop = function () {
+        clearTimeout(this.spawner);
+    }
+
+    this.getSpawnTimer = function () {
+        return (Math.random() * this.maxDistance) + this.minDistance
+    }
+}
+
+var game = new Game();
+game.init();
+
+</script>
+</body>
+</html>
