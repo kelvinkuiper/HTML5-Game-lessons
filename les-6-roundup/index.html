@@ -93,19 +93,24 @@ Player.prototype.update = function() {
     /* 
     ** Player update method. Called in our main update loop
     */
-    if (KEY_STATUS.buttondown) {
+
+    if (KEY_STATUS.buttondown) { 
+        //If there's a button pressed, jump!
         this.vy = -this.jumpHeight;
     }
     
+    //Add gravity to the velocity of Y. Update Y with its velocity
     this.vy += game.gravity;
     this.y += this.vy;
 
+    //Did we hit the top?
     if(this.y > H - this.height){
         this.y = H - this.height;
         this.vy = 0;
     }
 
-    if(this.y < 0){
+    //Did we hit the ground?
+    if(this.y <= 0){
         this.y = 0;
         this.vy = 0;
     }
@@ -158,11 +163,12 @@ var Background = function () {
     }
 
     this.draw = function () {
+
+        this.x -= this.speed;
+
         if(Math.abs(this.x) >= W){
             this.x = 0;
         }
-
-        this.x -= this.speed;
 
         ctx.drawImage(this.image, this.x, this.y);
         ctx.drawImage(this.image, this.x + this.width, this.y);
@@ -202,7 +208,10 @@ var Game = function() {
         'maxDistance': 1000
     }
 
+    this.kratten = [];
+
     this.scoreBoard = document.getElementById('score');
+    this.gameOverDiv = document.getElementById('gameover');
 
     this.init = function () {
         /*
@@ -220,7 +229,7 @@ var Game = function() {
         /*
         ** Start our game! Don't forget to re-initialize everything, score, etc.
         */
-        document.getElementById('gameover').style.display = 'none';
+        this.gameOverDiv.style.display = 'none';
 
         this.start = Date.now();
         this.kratten = [];
@@ -231,8 +240,8 @@ var Game = function() {
         this.background = new Background();
         this.background.init();
 
-
-        animate(); //start animate loop
+        //start animate loop
+        animate(); 
 
         //start krattenspawner loop
         this.krattenSpawner = new KrattenSpawner(); 
@@ -244,15 +253,18 @@ var Game = function() {
         * Also: collision detection, score updating, etc
         */
 
+        // Update score
         this.score = Math.round(elapsed / 100);
         this.scoreBoard.innerHTML = this.score;
 
         // Handle x,y updates of the player
         this.player.update();
 
-        // Handle enemies
+        // Handle all enemies
         for(var i in this.kratten) {
             this.kratten[i].update();
+
+            // Handle collisions!
             if( this.kratten[i].x + this.kratten[i].width > this.player.x
                 && this.kratten[i].x <= this.player.x + this.player.width
                 && this.kratten[i].x + this.kratten[i].width >= this.player.x 
@@ -282,21 +294,23 @@ var Game = function() {
     }
     this.gameOver = function () {
         this.krattenSpawner.stop();
-        document.getElementById('gameover').style.display = 'block';
+        this.gameOverDiv.style.display = 'block';
         document.getElementById('endscore').innerHTML = this.score;
     }
 }
 
 
 var spawnKrat = function () {
+    /*
+    ** This will spawn a new crate!
+    */
     
-    //player might have died! So check for that.
-    if(game.player.alive) {
+    if(game.player.alive) { //player might have died! So check for that.
         
-        //This will re-initialize the last crate in our array
+        //This will re-initialize the last crate in our array and make it alive.
         game.kratten[game.kratten.length - 1].init(true);
 
-        //Put the last item in the array and put it in front
+        //Remove the last item in the array and put it in front
         game.kratten.unshift(game.kratten.pop());
 
         //Spawn next crate!
@@ -315,9 +329,11 @@ var KrattenSpawner = function () {
         this.minDistance = minDistance;
         this.maxDistance = maxDistance;
 
+        //create the array with crates. 
         for(var i = 0; i < poolsize; i++) {
             var krat = new Enemy();
-            krat.init(false);
+            //Use false to make a dead crate. 'Dead' crates wont be drawn or updated.
+            krat.init(false); 
             game.kratten[i] = krat;
         }
 
@@ -337,6 +353,7 @@ var KrattenSpawner = function () {
     }
 }
 
+/* Create game object. Initialize it! */
 var game = new Game();
 game.init();
 
