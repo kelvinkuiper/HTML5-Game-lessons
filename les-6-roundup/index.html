@@ -61,29 +61,6 @@ var ctx = canvas.getContext('2d');
 var W = canvas.width;
 var H = canvas.height;
 
-var Background = function () {
-    this.init = function () {
-        this.image = new Image();
-        this.image.src = 'img/game-background.jpg';
-        this.speed = game.speed;
-        this.y = 0;
-        this.x = 0;
-
-        this.width = W;
-        this.height = H;
-    }
-
-    this.draw = function () {
-        if(Math.abs(this.x) >= W){
-            this.x = 0;
-        }
-
-        this.x -= this.speed;
-
-        ctx.drawImage(this.image, this.x, this.y);
-        ctx.drawImage(this.image, this.x + this.width, this.y);
-    }
-}
 
 var Player = function () {
     /* 
@@ -147,10 +124,6 @@ var Enemy = function () {
 
         this.image = new Image();
         this.image.src = 'img/krat.png';
-
-        if(alive) {
-            //game.particleExplosion.init(this.x - (this.width/2), this.y);
-        }
     }
 }
 Enemy.prototype.draw = function () {
@@ -169,31 +142,30 @@ Enemy.prototype.update = function () {
     
 }
 
-var Particle = function () {
-    this.init = function (x, y, speed, dir, life) {
+var Background = function () {
+    /*
+    ** The background drawable!
+    */
+    this.init = function () {
+        this.image = new Image();
+        this.image.src = 'img/game-background.jpg';
+        this.speed = game.speed;
+        this.y = 0;
+        this.x = 0;
 
-        this.x = x;
-        this.y = y;
-        
-        this.speed = speed;
-        this.dir = dir;
-
-        this.life = life;
-
-        this.xInc = Math.cos(this.dir) * this.speed;
-        this.yInc = Math.sin(this.dir) * this.speed;
-
+        this.width = W;
+        this.height = H;
     }
-    this.update = function() {
-        
-        this.x += this.xInc;
-        this.y += this.yInc;
-        
-        this.life--;
-    }   
+
     this.draw = function () {
-        ctx.fillStyle = "#fff";
-        ctx.fillRect(this.x-1, this.y-1, 4, 4);
+        if(Math.abs(this.x) >= W){
+            this.x = 0;
+        }
+
+        this.x -= this.speed;
+
+        ctx.drawImage(this.image, this.x, this.y);
+        ctx.drawImage(this.image, this.x + this.width, this.y);
     }
 }
 
@@ -214,14 +186,16 @@ var animate = function () {
 }
 
 var Game = function() {
+    /*
+    ** The global game object. This one ties all our drawables and gameplay together.
+    */
 
     this.score = 0;
     this.elapsed = 0;
 
-    this.speed = 3; //controls the speed of the kratten going left
-    this.gravity = 0.2; //controls the gravity pulling the player
-    
-    this.jumpHeight = 4; //controls the velocity of player going upwards
+    this.speed = 3;
+    this.gravity = 0.2;
+    this.jumpHeight = 4; 
 
     this.AantalKratten = {
         'minDistance': 500,
@@ -231,6 +205,10 @@ var Game = function() {
     this.scoreBoard = document.getElementById('score');
 
     this.init = function () {
+        /*
+        ** Initialize our game! 
+        ** TODO: (pre)load our assets. 
+        */
         document.getElementById('gameover').addEventListener('click', function(){
             game.startGame();
         });
@@ -239,7 +217,9 @@ var Game = function() {
     }
 
     this.startGame = function () {
-
+        /*
+        ** Start our game! Don't forget to re-initialize everything, score, etc.
+        */
         document.getElementById('gameover').style.display = 'none';
 
         this.start = Date.now();
@@ -309,22 +289,32 @@ var Game = function() {
 
 
 var spawnKrat = function () {
+    
+    //player might have died! So check for that.
     if(game.player.alive) {
         
+        //This will re-initialize the last crate in our array
         game.kratten[game.kratten.length - 1].init(true);
+
+        //Put the last item in the array and put it in front
         game.kratten.unshift(game.kratten.pop());
 
+        //Spawn next crate!
         game.krattenSpawner.start();
     }   
 }
 
 var KrattenSpawner = function () {
+    /*
+    ** This function will create an array of enemies with a max size of poolsize.
+    ** TODO: Remove poolsize as an int. Garbage collect crates ouf of screen instead.
+    */
 
     this.init = function (minDistance, maxDistance, poolsize) {
         
         this.minDistance = minDistance;
         this.maxDistance = maxDistance;
-        console.log(poolsize);
+
         for(var i = 0; i < poolsize; i++) {
             var krat = new Enemy();
             krat.init(false);
