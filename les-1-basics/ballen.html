@@ -9,73 +9,26 @@
     </style>
 </head>
 <body>
- 
+
 <canvas id="canvas" width="400" height="200"></canvas>
- 
+
 <script>
-var KEY_CODES = {
-    32: 'space',
-    37: 'left',
-    38: 'up',
-    39: 'right',
-    40: 'down'
-}
-var KEY_STATUS = {
-    'space': false,
-    'left': false,
-    'up': false,
-    'right': false,
-    'down': false
-}
-
-/*
-var KEY_STATUS = {};
-for (code in KEY_CODES) {
-    KEY_STATUS[KEY_CODES[code]] = false;
-} 
-*/
-
-document.onkeydown = function(e) {
-    // Firefox and opera use charCode instead of keyCode to
-    // return which key was pressed.
-    var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
-    if (KEY_CODES[keyCode]) {
-        e.preventDefault();
-        KEY_STATUS[KEY_CODES[keyCode]] = true;
-    }
-}
-
-document.onkeyup = function(e) {
-    var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
-    if (KEY_CODES[keyCode]) {
-        e.preventDefault();
-        KEY_STATUS[KEY_CODES[keyCode]] = false;
-    }
-}
-
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
-var W = canvas.width;
-var H = canvas.height;
 
-var gravity = 0.6;
-var friction = 0.9;
-
+//Zo tekenen we een vierkant, 50 bij 50
+ctx.fillStyle = "black";
+ctx.fillRect (50, 50, 50, 50);
 
 function Ball() {
-    // Nu tekenen we een circel
+    //Random color!
     this.color = '#'+(Math.random()*0xFFFFFF<<0).toString(16);
+    //Random radius!
     this.radius = (Math.floor(Math.random() * 20)+5);
-
-    this.y = 10; ////Math.floor(Math.random() * canvas.height);
+    //Random Y!
+    this.y = Math.floor(Math.random() * canvas.height);
+    //Random X!
     this.x = Math.floor(Math.random() * canvas.width);
-
-    this.vx = 0;
-    this.vy = 0;
-
-    this.speed = 1;
-
-    return this;
 
 }
 Ball.prototype.draw = function () {
@@ -86,65 +39,13 @@ Ball.prototype.draw = function () {
     ctx.fill();
 }
 
-Ball.prototype.update = function () {
+var ballAmount = 30;
+var balls = [];
 
-    if(KEY_STATUS.right) {
-        this.vx += player.speed;
-    }
-
-    if(KEY_STATUS.left) {
-        this.vx -= player.speed;
-    }
-
-    if(KEY_STATUS.space) {
-        this.vy = -10;
-    }
-
-    this.vx *= friction;
-    this.x += this.vx;
-
-    this.vy += gravity;
-    this.y += this.vy;
-
-    if(this.x >= W) {
-        this.x = W;
-    }
-    if(this.x <= 0) {
-        this.x = 0;
-    }
-
-
-    if(this.y + this.radius >= H ){
-        // WE RAKEN DE VLOER!!@@#^%$
-        this.y = H - this.radius;
-        //this.vy *= -0.8756;
-    }
-    
+for(i=0; i <= ballAmount; i++){
+    var ball = new Ball();
+    ball.draw();
 }
-
-var player = new Ball();
-
-
-
-function update() {
-    player.update();
-}
-
-function draw () {
-    ctx.clearRect(0, 0, W, H);
-    player.draw();
-}
-
-function main () {
-    requestAnimationFrame(main);
-    update();
-    draw();
-}
-
-main();
-    
- 
-
 </script>
 </body>
 </html>
